@@ -42,7 +42,11 @@ Goals:
     * Order of preference for backends
     * Order of preference for frontends
     * Tweaks for LD_LIBRARY_PATH and other environment variables
-    * whether to use tmux or screen for starting new ncruses UI
+    * whether to use tmux, screen or some other terminal emulator
+      like xterm (X11) for starting new command-line shell or
+      ncruses UI.
+ * Execution on other machine in the network, via ssh/libssh/gabriel.
+   Facilitate public / private key setup for such deployments.
 
 For installation instructions, read the doc/INSTALL.rst file.
 If you are a (linux or libre) distribution packager,
