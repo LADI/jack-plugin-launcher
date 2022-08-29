@@ -3,9 +3,9 @@ under the terms of multiple licenses.
 
 Choose the one that suits you:
 
- * GPLv2+ (see gpl2.txt)
- * GPLv3 (see gpl3.txt)
- * Academic Free License version 2.1 (see afl21.txt)
- * MIT (see mit.txt)
+ * GPLv2+ (see doc/gpl2.txt)
+ * GPLv3 (see doc/gpl3.txt)
+ * Academic Free License version 2.1 (see doc/afl21.txt)
+ * MIT (see doc/mit.txt)
 
-Documentation is provided under the terms of GFDL-1.3 (see gfdl-1.3.txt)
+Documentation is provided under the terms of GFDL-1.3 (see doc/gfdl-1.3.txt)
