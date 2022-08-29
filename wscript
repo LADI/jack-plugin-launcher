@@ -46,7 +46,8 @@ def git_ver(self):
         self.ver = "unknown"
 
     fi = open(header, 'w')
-    fi.write('#define GIT_VERSION "%s"\n' % self.ver)
+    if self.ver != "unknown":
+        fi.write('#define GIT_VERSION "%s"\n' % self.ver)
     fi.close()
 
 def display_msg(conf, msg="", status = None, color = None):
