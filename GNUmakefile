@@ -22,3 +22,8 @@ EPREFIX := $(TOP)/build/destdir
 .PHONY: cibuild
 cibuild:
 	./waf configure --prefix=$(EPREFIX) && ./waf install && $(EPREFIX)/bin/jpl
+
+doxdoc:
+	mkdir -vp build
+	doxygen doc/Doxyfile
+	cp doc/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js build/doxout/html/
