@@ -14,6 +14,8 @@ import time
 from waflib import Logs, Options, TaskGen, Context, Utils
 from waflib.Build import BuildContext, CleanContext, InstallContext, UninstallContext
 
+from waftoolchainflags import WafToolchainFlags
+
 APPNAME='jpl'
 VERSION='0-dev'
 
@@ -66,11 +68,22 @@ def display_line(conf, text, color = 'NORMAL'):
 def options(opt):
     # options provided by the modules
     opt.load('compiler_c')
+    opt.load('wafautooptions')
+
+    opt.add_auto_option(
+        'devmode',
+        help='Enable devmode', # enable warnings and treat them as errors
+        conf_dest='BUILD_DEVMODE',
+        default=False,
+    )
 
     opt.add_option('--mandir', type='string', help="Manpage directory [Default: <prefix>/share/man]")
 
 def configure(conf):
     conf.load('compiler_c')
+    conf.load('wafautooptions')
+
+    flags = WafToolchainFlags(conf)
 
     conf.check_cfg(package='libevent', mandatory=True, args='--cflags --libs')
     conf.check_cfg(package='liblo', mandatory=True, args='--cflags --libs')
@@ -85,6 +98,29 @@ def configure(conf):
     conf.define('HAVE_GITVERSION_H', 1)
     conf.define('BUILD_TIMESTAMP', time.ctime())
     conf.write_config_header('config.h')
+
+    flags.add_c('-std=c99')
+    if conf.env['BUILD_DEVMODE']:
+        flags.add_c(['-Wall', '-Wextra', '-Wpedantic'])
+        flags.add_c('-Werror')
+
+        # https://wiki.gentoo.org/wiki/Modern_C_porting
+        if conf.env['CC'] == 'clang':
+            flags.add_c('-Wno-unknown-argumemt')
+            flags.add_c('-Werror=implicit-function-declaration')
+            flags.add_c('-Werror=incompatible-function-pointer-types')
+            flags.add_c('-Werror=deprecated-non-prototype')
+            flags.add_c('-Werror=strict-prototypes')
+            if int(conf.env['CC_VERSION'][0]) < 16:
+                flags.add_c('-Werror=implicit-int')
+        else:
+            flags.add_c('-Wno-unknown-warning-option')
+            flags.add_c('-Werror=implicit-function-declaration')
+            flags.add_c('-Werror=implicit-int')
+            flags.add_c('-Werror=incompatible-pointer-types')
+            flags.add_c('-Werror=strict-prototypes')
+
+    flags.flush()
 
     gitrev = None
     if os.access('gitversion.h', os.R_OK):
@@ -104,6 +140,9 @@ def configure(conf):
     print()
 
     display_msg(conf, "Install prefix", conf.env['PREFIX'], 'CYAN')
+    display_msg(conf, "Compiler", conf.env['CC'][0], 'CYAN')
+    conf.summarize_auto_options()
+    flags.print()
     print()
 
 def build(bld):
