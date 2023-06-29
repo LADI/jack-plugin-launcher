@@ -99,9 +99,10 @@ def configure(conf):
     conf.define('BUILD_TIMESTAMP', time.ctime())
     conf.write_config_header('config.h')
 
-    flags.add_c('-std=c99')
+    flags.add_c('-std=gnu99')
     if conf.env['BUILD_DEVMODE']:
-        flags.add_c(['-Wall', '-Wextra', '-Wpedantic'])
+        flags.add_c(['-Wall', '-Wextra'])
+        #flags.add_c('-Wpedantic')
         flags.add_c('-Werror')
 
         # https://wiki.gentoo.org/wiki/Modern_C_porting
@@ -151,6 +152,15 @@ def build(bld):
         update_outputs=True,
         always=True,
         ext_out=['.h'])
+
+    lib = bld.shlib(source = [], features = 'c cshlib', includes = [bld.path.get_bld()])
+    lib.uselib = 'DL'
+    lib.target = 'jpl'
+    for source in [
+        'loader.c',
+        'catdup.c',
+        ]:
+        lib.source.append(source)
 
     prog = bld(features=['c', 'cprogram'])
     prog.source = [
