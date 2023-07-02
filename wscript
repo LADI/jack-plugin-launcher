@@ -88,6 +88,7 @@ def configure(conf):
     conf.check_cfg(package='libevent', mandatory=True, args='--cflags --libs')
     conf.check_cfg(package='liblo', mandatory=True, args='--cflags --libs')
     conf.check_cfg(package='dbus-1', mandatory=False, args='--cflags --libs')
+    conf.check_cfg(package='gio-2.0', mandatory=True, args='--cflags --libs')
 
     if Options.options.mandir:
         conf.env['MANDIR'] = Options.options.mandir
@@ -153,15 +154,6 @@ def build(bld):
         always=True,
         ext_out=['.h'])
 
-    lib = bld.shlib(source = [], features = 'c cshlib', includes = [bld.path.get_bld()])
-    lib.uselib = 'DL'
-    lib.target = 'jpl'
-    for source in [
-        'loader.c',
-        'catdup.c',
-        ]:
-        lib.source.append(source)
-
     prog = bld(features=['c', 'cprogram'])
     prog.source = [
         'main.c',
@@ -170,6 +162,18 @@ def build(bld):
     prog.target = 'jpl'
     prog.use = ['LIBEVENT', 'LIBLO', 'DBUS-1']
     prog.defines = ["HAVE_CONFIG_H"]
+
+    bld.shlib(
+        source = [
+            'loader.c',
+            'catdup.c',
+            'gdbus/jpl.c',
+        ],
+        features = 'c cshlib',
+        includes = [bld.path.get_bld()],
+        uselib = ['GIO-2.0'],
+        target = 'jpl',
+    )
 
     # install man pages
     man_pages = [

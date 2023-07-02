@@ -46,7 +46,7 @@
     <!--   <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QtAM::UnixFdMap"/> -->
     <!--   <arg name="documentUrl" type="s" direction="in"/> -->
     <!-- </method> -->
-    <method name="startApplication">
+    <method name="startApplicationOpenUrl">
       <arg type="b" direction="out"/>
       <arg name="id" type="s" direction="in"/>
       <arg name="documentUrl" type="s" direction="in"/>
@@ -74,7 +74,7 @@
     <!--   <arg name="id" type="s" direction="in"/> -->
     <!--   <arg name="debugWrapper" type="s" direction="in"/> -->
     <!-- </method> -->
-    <method name="stopApplication">
+    <method name="stopApplication2">
       <arg name="id" type="s" direction="in"/>
       <arg name="forceKill" type="b" direction="in"/>
     </method>
@@ -83,7 +83,7 @@
     </method>
     <method name="stopAllApplications">
     </method>
-    <method name="stopAllApplications">
+    <method name="stopAllApplications2">
         <arg name="forceKill" type="b" direction="in"/>
     </method>
     <!-- <method name="openUrl"> -->

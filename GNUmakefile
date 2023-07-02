@@ -27,3 +27,9 @@ doxdoc:
 	mkdir -vp build
 	doxygen doc/Doxyfile
 	cp doc/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js build/doxout/html/
+
+.PHONY: gdbus-regenerate
+gdbus-regenerate:
+#	gdbus-codegen --c-namespace jpl --generate-c-code jpl --output-directory gdbus/ org.ladish.applicationmanager.xml
+#	g-ir-scanner -n jpl --library=jpl --cflags-begin $$(pkg-config --cflags gio-2.0) --cflags-end -L$$(pwd)/build/ gdbus/jpl.[hc] -o $$(pwd)/build/jpl.gir
+	g-ir-compiler --includedir=. $$(pwd)/build/jpl.gir -o build/jpl.typelib
