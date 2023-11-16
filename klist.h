@@ -1,15 +1,21 @@
 /* -*- Mode: C ; c-basic-offset: 2 -*- */
-/*
+/* SPDX-FileCopyrightText: Copyright © Linux kernel tree authors */
+/* SPDX-License-Identifier: ( GPL-2.0 ) */
+/**
+ * @file   klist.h
+ * @brief  Linux kernel header adapted for user-mode
+ *
  * Linux kernel header adapted for user-mode. The 2.6.17-rt1 version was used.
  *
  * Original copyright holders of this code are unknown, they were not
  * mentioned in the original file.
  *
  * Linux source code is GPL licensed
- **************************************************************************
- * This file contains implementation of double linked list (kernel style)
- **************************************************************************
  */
+
+/**************************************************************************
+ * This file contains implementation of double linked list (kernel style)
+ **************************************************************************/
 
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H

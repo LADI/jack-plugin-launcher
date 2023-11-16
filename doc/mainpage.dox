@@ -1,0 +1,10 @@
+/**
+@mainpage LADI core module
+
+LADI core module complements the C runtime with few basic building blocks
+that are used almost everywhere in the LADI system (jackdbus, a2jmidid, ladish, etc).
+
+ - klist.h - Linked list header implementation borrowed from Linux kernel
+ - catdup.h - String concatenation into newly allocated buffer
+ - file.h - File helpers
+*/
