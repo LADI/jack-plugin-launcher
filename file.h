@@ -14,7 +14,7 @@
  * @brief Read (small) file contents into newly allocated buffer
  * Use this function with caution as big enough files may not fit in RAM.
  *
- * @param name of file to read
+ * @param filename name of file to read
  *
  * @return Newly allocated buffer where the contents if specified file are read into.
  */
