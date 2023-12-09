@@ -6,7 +6,7 @@
  * @brief  String concatenation into newly allocated buffer
  */
 /**************************************************************************
- * This file contains implementation of double linked list (kernel style)
+ * This file contains prototypes of the catdup() functions
  **************************************************************************/
 
 #ifndef CATDUP_H__D42302F1_4D96_4EE4_AC09_E97ED5748277__INCLUDED
