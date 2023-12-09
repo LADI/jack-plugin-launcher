@@ -100,6 +100,7 @@ def configure(conf):
     conf.write_config_header('config.h')
 
     flags.add_c('-std=gnu99')
+    flags.add_c('-fvisibility=hidden')
     if conf.env['BUILD_DEVMODE']:
         flags.add_c(['-Wall', '-Wextra'])
         #flags.add_c('-Wpedantic')
