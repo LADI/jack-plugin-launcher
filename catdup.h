@@ -65,6 +65,6 @@ char * catdupv(const char * s1, const char * s2, ...);
  *
  * @return Newly allocated buffer where the input strings are concatenated into.
  */
-char * catdup_array(const char ** array, const char * delimiter);
+char * catdup_array(const char * const * array, const char * delimiter);
 
 #endif /* #ifndef CATDUP_H__D42302F1_4D96_4EE4_AC09_E97ED5748277__INCLUDED */
