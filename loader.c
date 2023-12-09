@@ -69,8 +69,10 @@ static struct list_head jpl_g_children;
 #define jpl_child_log(ctx, format, args...) jpl_g_on_log(ctx, false, format, ## args);
 #define jpl_child_error(ctx, format, args...) jpl_g_on_log(ctx, true, format, ## args);
 
-static struct jpl_child *
-jpl_child_find(pid_t pid)
+static
+struct jpl_child *
+jpl_child_find(
+  pid_t pid)
 {
   struct list_head *node_ptr;
   struct jpl_child *child_ptr;
@@ -105,8 +107,10 @@ jpl_check_line_repeat_end(
   }
 }
 
-static void
-jpl_childs_bury(void)
+static
+void
+jpl_childs_bury(
+  void)
 {
   struct list_head *node_ptr;
   struct list_head *next_ptr;
@@ -141,7 +145,10 @@ jpl_childs_bury(void)
   }
 }
 
-static void jpl_sigchld_handler(int signum)
+static
+void
+jpl_sigchld_handler(
+  int signum)
 {
   int status;
   pid_t pid;
@@ -202,7 +209,9 @@ jpl_init(
   INIT_LIST_HEAD(&jpl_g_children);
 }
 
-void jpl_uninit(void)
+void
+jpl_uninit(
+  void)
 {
   jpl_childs_bury();
 }
@@ -433,8 +442,10 @@ jpl_read_child_output(
   while ((size_t)ret == max_read);      /* if we have read everything as much as we can, then maybe there is more to read */
 }
 
-static void
-jpl_read_childs_output(void)
+static
+void
+jpl_read_childs_output(
+  void)
 {
   struct list_head * node_ptr;
   struct jpl_child * child_ptr;
@@ -467,7 +478,9 @@ jpl_read_childs_output(void)
 }
 
 void
-jpl_run(void)
+void
+jpl_run(
+  void)
 {
   jpl_read_childs_output();
   jpl_childs_bury();
@@ -635,7 +648,9 @@ fail:
   return false;
 }
 
-unsigned int jpl_get_app_count(void)
+unsigned int
+jpl_get_app_count(
+  void)
 {
   struct list_head * node_ptr;
   unsigned int count;

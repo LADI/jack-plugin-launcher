@@ -26,7 +26,8 @@ void
   void * ctx,
   bool error,
   const char * format,
-  ...) __attribute__((format(printf, 3, 4)));
+  ...)
+  __attribute__((format(printf, 3, 4)));
 
 void
 jpl_init(
@@ -44,10 +45,16 @@ jpl_execute(
   pid_t * pid_ptr,
   jpl_child_handle * child_handle_ptr);
 
-void jpl_run(void);
+void
+jpl_run(
+  void);
 
-void jpl_uninit(void);
+void
+jpl_uninit(
+  void);
 
-unsigned int jpl_get_app_count(void);
+unsigned int
+jpl_get_app_count(
+  void);
 
 #endif /* #ifndef JPL_H__6D6AF97A_DA41_46D6_954B_A121B25E96CE__INCLUDED */
