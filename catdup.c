@@ -138,7 +138,7 @@ char * catdupv(const char * s1, const char * s2, ...)
   return buffer;
 }
 
-char * catdup_array(const char ** array, const char * delimiter)
+char * catdup_array(const char * const * array, const char * delimiter)
 {
   size_t len;
   size_t i;
