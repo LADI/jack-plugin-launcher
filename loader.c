@@ -34,13 +34,11 @@
 
 #include "catdup.h"
 
-struct loader_child
+struct jpl_child
 {
   struct list_head  siblings;
 
-  //char * vgraph_name;
-  //char * app_name;
-  //char * project_name;
+  void * ctx;
 
   bool dead;
   int exit_status;
@@ -61,18 +59,25 @@ struct loader_child
   char * stderr_buffer_ptr;
 };
 
-static void (* g_on_child_exit)(pid_t pid, int exit_status);
-static struct list_head g_childs_list;
+static jpl_on_child_exit jpl_g_on_child_exit;
+static jpl_log_callback jpl_g_on_log;
+static struct list_head jpl_g_children;
 
-static struct loader_child *
-loader_child_find(pid_t pid)
+#define jpl_log(format, args...) jpl_g_on_log(NULL, false, format, ## args);
+#define jpl_error(format, args...) jpl_g_on_log(NULL, true, format, ## args);
+
+#define jpl_child_log(ctx, format, args...) jpl_g_on_log(ctx, false, format, ## args);
+#define jpl_child_error(ctx, format, args...) jpl_g_on_log(ctx, true, format, ## args);
+
+static struct jpl_child *
+jpl_child_find(pid_t pid)
 {
   struct list_head *node_ptr;
-  struct loader_child *child_ptr;
+  struct jpl_child *child_ptr;
 
-  list_for_each (node_ptr, &g_childs_list)
+  list_for_each (node_ptr, &jpl_g_children)
   {
-    child_ptr = list_entry(node_ptr, struct loader_child, siblings);
+    child_ptr = list_entry(node_ptr, struct jpl_child, siblings);
     if (child_ptr->pid == pid)
     {
       return child_ptr;
@@ -84,56 +89,45 @@ loader_child_find(pid_t pid)
 
 static
 void
-loader_check_line_repeat_end(
-//  char * vgraph_name,
-//  char * app_name,
+jpl_check_line_repeat_end(
+  struct jpl_child * child_ptr,
   bool error,
   unsigned int last_line_repeat_count)
 {
   if (last_line_repeat_count >= 2)
   {
-    if (error)
-    {
-      //log_error_plain("%s:%s: stderr line repeated %u times", vgraph_name, app_name, last_line_repeat_count);
-    }
-    else
-    {
-      //log_info("%s:%s: stdout line repeated %u times", vgraph_name, app_name, last_line_repeat_count);
-    }
+    jpl_g_on_log(
+      child_ptr->ctx,
+      error,
+      "%s line repeated %u times",
+      error ? "stderr" : "stdout",
+      last_line_repeat_count);
   }
 }
 
 static void
-loader_childs_bury(void)
+jpl_childs_bury(void)
 {
   struct list_head *node_ptr;
   struct list_head *next_ptr;
-  struct loader_child *child_ptr;
+  struct jpl_child *child_ptr;
 
-  list_for_each_safe (node_ptr, next_ptr, &g_childs_list)
+  list_for_each_safe (node_ptr, next_ptr, &jpl_g_children)
   {
-    child_ptr = list_entry(node_ptr, struct loader_child, siblings);
+    child_ptr = list_entry(node_ptr, struct jpl_child, siblings);
     if (child_ptr->dead)
     {
-      loader_check_line_repeat_end(
-        //child_ptr->vgraph_name,
-        //child_ptr->app_name,
+      jpl_check_line_repeat_end(
+        child_ptr,
         false,
         child_ptr->stdout_last_line_repeat_count);
 
-      loader_check_line_repeat_end(
-        //child_ptr->vgraph_name,
-        //child_ptr->app_name,
+      jpl_check_line_repeat_end(
+        child_ptr,
         true,
         child_ptr->stderr_last_line_repeat_count);
 
-      //log_debug("Bury child '%s' with PID %llu", child_ptr->app_name, (unsigned long long)child_ptr->pid);
-
       list_del(&child_ptr->siblings);
-
-      //free(child_ptr->project_name);
-      //free(child_ptr->vgraph_name);
-      //free(child_ptr->app_name);
 
       if (!child_ptr->terminal)
       {
@@ -141,39 +135,39 @@ loader_childs_bury(void)
         close(child_ptr->stderr);
       }
 
-      g_on_child_exit(child_ptr->pid, child_ptr->exit_status);
+      jpl_g_on_child_exit(child_ptr->ctx, child_ptr->exit_status);
       free(child_ptr);
     }
   }
 }
 
-static void loader_sigchld_handler(int signum)
+static void jpl_sigchld_handler(int signum)
 {
   int status;
   pid_t pid;
-  struct loader_child *child_ptr;
+  struct jpl_child *child_ptr;
   int signal;
 
   ASSERT(signum == SIGCHLD);
 
   while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
   {
-    child_ptr = loader_child_find(pid);
+    child_ptr = jpl_child_find(pid);
 
     if (!child_ptr)
     {
-      //log_error("Termination of unknown child process with PID %llu detected", (unsigned long long)pid);
+      jpl_error("Termination of unknown child process with PID %llu detected", (unsigned long long)pid);
     }
     else
     {
-      //log_info("Termination of child process '%s' with PID %llu detected", child_ptr->app_name, (unsigned long long)pid);
+      jpl_log("Termination of child process with PID %llu detected", (unsigned long long)pid);
       child_ptr->dead = true;
       child_ptr->exit_status = status;
     }
 
     if (WIFEXITED(status))
     {
-      //log_info("Child exited, code=%d", WEXITSTATUS(status));
+      jpl_log("Child exited, code=%d", WEXITSTATUS(status));
     }
     else if (WIFSIGNALED(status))
     {
@@ -184,33 +178,37 @@ static void loader_sigchld_handler(int signum)
       case SIGABRT:
       case SIGSEGV:
       case SIGFPE:
-        //log_error("Child was killed by signal %d", signal);
+        jpl_error("Child was killed by signal %d", signal);
         break;
       default:
-        //log_info("Child was killed by signal %d", signal);
+        jpl_log("Child was killed by signal %d", signal);
       }
     }
     else if (WIFSTOPPED(status))
     {
-      //log_info("Child was stopped by signal %d", WSTOPSIG(status));
+      jpl_log("Child was stopped by signal %d", WSTOPSIG(status));
     }
   }
 }
 
-void loader_init(void (* on_child_exit)(pid_t pid, int exit_status))
+void
+jpl_init(
+  jpl_on_child_exit on_child_exit,
+  jpl_log_callback log_callback)
 {
-  g_on_child_exit = on_child_exit;
-  signal(SIGCHLD, loader_sigchld_handler);
-  INIT_LIST_HEAD(&g_childs_list);
+  jpl_g_on_child_exit = on_child_exit;
+  jpl_g_on_log = log_callback,
+  signal(SIGCHLD, jpl_sigchld_handler);
+  INIT_LIST_HEAD(&jpl_g_children);
 }
 
-void loader_uninit(void)
+void jpl_uninit(void)
 {
-  loader_childs_bury();
+  jpl_childs_bury();
 }
 
 #if 0
-static void loader_exec_program_in_xterm(const char * const * argv)
+static void jpl_exec_program_in_xterm(const char * const * argv)
 {
   char * dst_ptr;
   const char * const * src_ptr_ptr;
@@ -254,16 +252,11 @@ static void loader_exec_program_in_xterm(const char * const * argv)
 
 static
 void
-loader_exec_program(
+jpl_exec_program(
   const char * commandline,
   const char * working_dir,
-  //const char * session_dir,
-  bool run_in_terminal
-  //const char * vgraph_name,
-  //const char * project_name,
-  //const char * app_name,
-  //bool set_env_vars
-  )
+  bool run_in_terminal,
+  const char * const * env_vars)
 {
   const char * argv[8];
   unsigned int i;
@@ -282,26 +275,17 @@ loader_exec_program(
   /* change the working dir */
   if (chdir(working_dir) == -1)
   {
-    //fprintf(stderr, "Could not change directory to working dir '%s' for app '%s': %s\n", working_dir, app_name, strerror(errno));
+    fprintf(stderr, "Could not change directory to working dir '%s': %s\n", working_dir, strerror(errno));
   }
 
-#if 0
-  if (set_env_vars)
+  if (env_vars)
   {
-    setenv("LADISH_APP_NAME", app_name, true);
-    setenv("LADISH_VGRAPH_NAME", vgraph_name, true);
-
-    if (project_name != NULL)
+    while (env_vars[0] != NULL)
     {
-      setenv("LADISH_PROJECT_NAME", project_name, true);
+      setenv(env_vars[0], env_vars[1], true);
+      env_vars += 2;
     }
   }
-
-  if (session_dir != NULL)
-  {
-    setenv("SESSION_DIR", session_dir, true);
-  }
-#endif
 
   i = 0;
 
@@ -329,7 +313,7 @@ loader_exec_program(
 
   //if (!conf_get(LADISH_CONF_KEY_DAEMON_SHELL, argv + i))
   {
-    argv[i] = "sj";
+    argv[i] = "sh";
   }
   i++;
 
@@ -350,9 +334,8 @@ loader_exec_program(
 
 static
 void
-loader_read_child_output(
-  //char * vgraph_name,
-  //char * app_name,
+jpl_read_child_output(
+  struct jpl_child * child_ptr,
   int fd,
   bool error,
   char * buffer_ptr,
@@ -385,11 +368,11 @@ loader_read_child_output(
           {
             if (error)
             {
-              //log_error_plain("%s:%s: last stderr line repeating..", vgraph_name, app_name);
+              jpl_child_error(child_ptr->ctx, "last stderr line repeating...");
             }
             else
             {
-              //log_info("%s:%s: last stdout line repeating...", vgraph_name, app_name);
+              jpl_child_log(child_ptr->ctx, "last stdout line repeating...");
             }
           }
 
@@ -397,18 +380,18 @@ loader_read_child_output(
         }
         else
         {
-          loader_check_line_repeat_end(/* vgraph_name, app_name, */ error, *last_line_repeat_count);
+          jpl_check_line_repeat_end(child_ptr, error, *last_line_repeat_count);
 
           strcpy(last_line, char_ptr);
           *last_line_repeat_count = 1;
 
           if (error)
           {
-            //log_error_plain("%s:%s: %s", vgraph_name, app_name, char_ptr);
+            jpl_child_error(child_ptr->ctx, "%s", char_ptr);
           }
           else
           {
-            //log_info("%s:%s: %s", vgraph_name, app_name, char_ptr);
+            jpl_child_log(child_ptr->ctx, "%s", char_ptr);
           }
         }
 
@@ -427,11 +410,13 @@ loader_read_child_output(
 
           if (error)
           {
-            //log_error_plain("%s:%s: %s " ANSI_RESET ANSI_COLOR_RED "(truncated) " ANSI_RESET, vgraph_name, app_name, char_ptr);
+            jpl_child_error(child_ptr->ctx, "%s", char_ptr);
+            jpl_child_error(child_ptr->ctx, "last line was truncated");
           }
           else
           {
-            //log_info("%s:%s: %s " ANSI_RESET ANSI_COLOR_RED "(truncated) " ANSI_RESET, vgraph_name, app_name, char_ptr);
+            jpl_child_log(child_ptr->ctx, "%s", char_ptr);
+            jpl_child_log(child_ptr->ctx, "last line was truncated");
           }
 
           left = 0;
@@ -449,20 +434,19 @@ loader_read_child_output(
 }
 
 static void
-loader_read_childs_output(void)
+jpl_read_childs_output(void)
 {
   struct list_head * node_ptr;
-  struct loader_child * child_ptr;
+  struct jpl_child * child_ptr;
 
-  list_for_each (node_ptr, &g_childs_list)
+  list_for_each (node_ptr, &jpl_g_children)
   {
-    child_ptr = list_entry(node_ptr, struct loader_child, siblings);
+    child_ptr = list_entry(node_ptr, struct jpl_child, siblings);
 
     if (!child_ptr->terminal)
     {
-      loader_read_child_output(
-        //child_ptr->vgraph_name,
-        //child_ptr->app_name,
+      jpl_read_child_output(
+        child_ptr,
         child_ptr->stdout,
         false,
         child_ptr->stdout_buffer,
@@ -470,9 +454,8 @@ loader_read_childs_output(void)
         child_ptr->stdout_last_line,
         &child_ptr->stdout_last_line_repeat_count);
 
-      loader_read_child_output(
-        //child_ptr->vgraph_name,
-        //child_ptr->app_name,
+      jpl_read_child_output(
+        child_ptr,
         child_ptr->stderr,
         true,
         child_ptr->stderr_buffer,
@@ -484,95 +467,70 @@ loader_read_childs_output(void)
 }
 
 void
-loader_run(void)
+jpl_run(void)
 {
-  loader_read_childs_output();
-  loader_childs_bury();
+  jpl_read_childs_output();
+  jpl_childs_bury();
 }
 
-#define LD_PRELOAD_ADD "libalsapid.so libasound.so.2"
-
-static void set_ldpreload(void)
+static void set_ldpreload(const char * const * ldpreload)
 {
   const char * old;
   char * new;
+  char * add;
+
+  if (ldpreload == NULL) return;
+
+  add = catdup_array(ldpreload, " ");
+  if (new == NULL)
+  {
+    fprintf(stderr, "Memory allocation failure. Cannot catdup LD_PRELOAD array.\n");
+    exit(1);
+  }
 
   old = getenv("LD_PRELOAD");
   if (old != NULL)
   {
-    new = catdup3(LD_PRELOAD_ADD, " ", old);
+    new = catdup3(add, " ", old);
     if (new == NULL)
     {
       fprintf(stderr, "Memory allocation failure. Cannot hook libalsapid.so through LD_PRELOAD.\n");
-      return;
+      exit(1);
     }
   }
   else
   {
-    new = LD_PRELOAD_ADD;
+    new = add;
   }
 
   printf("LD_PRELOAD set to \"%s\"\n", new);
   setenv("LD_PRELOAD", new, 1);
 
-  if (old)
-  {
-    free(new);
-  }
+  if (old) free(new);
+  free(add);
 }
 
 bool
-loader_execute(
-  //const char * vgraph_name,
-  //const char * project_name,
-  //const char * app_name,
+jpl_execute(
+  void * ctx,
   const char * working_dir,
-  //const char * session_dir,
   bool run_in_terminal,
   const char * commandline,
-  //bool set_env_vars,
-  pid_t * pid_ptr)
+  const char * const * env_vars,
+  const char * const * ldpreload,
+  pid_t * pid_ptr,
+  jpl_child_handle * child_handle_ptr)
 {
   pid_t pid;
-  struct loader_child * child_ptr;
+  struct jpl_child * child_ptr;
   int stderr_pipe[2];
 
-  child_ptr = malloc(sizeof(struct loader_child));
+  child_ptr = malloc(sizeof(struct jpl_child));
   if (child_ptr == NULL)
   {
-    //log_error("malloc() failed to allocate struct loader_child");
+    jpl_error("malloc() failed to allocate struct jpl_child");
     goto fail;
   }
-
-#if 0
-  child_ptr->vgraph_name = strdup(vgraph_name);
-  if (child_ptr->vgraph_name == NULL)
-  {
-    //log_error("strdup() failed to duplicate vgraph name '%s'", vgraph_name);
-    goto free_struct;
-  }
-
-  if (project_name != NULL)
-  {
-    child_ptr->project_name = strdup(app_name);
-    if (child_ptr->project_name == NULL)
-    {
-      //log_error("strdup() failed to duplicate project name '%s'", project_name);
-      goto free_vgraph_name;
-    }
-  }
-  else
-  {
-    child_ptr->project_name = NULL;
-  }
-
-  child_ptr->app_name = strdup(app_name);
-  if (child_ptr->app_name == NULL)
-  {
-    //log_error("strdup() failed to duplicate app name '%s'", app_name);
-    goto free_project_name;
-  }
-#endif
 
   child_ptr->dead = false;
   child_ptr->terminal = run_in_terminal;
@@ -585,7 +543,7 @@ loader_execute(
   {
     if (pipe(stderr_pipe) == -1)
     {
-      //log_error("Failed to create stderr pipe");
+      jpl_error("Failed to create stderr pipe");
     }
     else
     {
@@ -593,16 +551,18 @@ loader_execute(
 
       if (fcntl(child_ptr->stderr, F_SETFL, O_NONBLOCK) == -1)
       {
-        /* log_error("Failed to set nonblocking mode on " */
-        /*            "stderr reading end: %s", */
-        /*            strerror(errno)); */
+        jpl_child_error(
+          child_ptr->ctx,
+          "Failed to set nonblocking mode on "
+          "stderr reading end: %s",
+          strerror(errno));
         close(stderr_pipe[0]);
         close(stderr_pipe[1]);
       }
     }
   }
 
-  list_add_tail(&child_ptr->siblings, &g_childs_list);
+  list_add_tail(&child_ptr->siblings, &jpl_g_children);
 
   if (!run_in_terminal)
   {
@@ -616,9 +576,9 @@ loader_execute(
 
   if (pid == -1)
   {
-    //log_error("Could not fork to exec program %s:%s: %s", vgraph_name, app_name, strerror(errno));
+    jpl_error("Could not fork to exec program: %s", strerror(errno));
     list_del(&child_ptr->siblings); /* fork failed so it is not really a child process to watch for. */
-    return false;
+    goto free_struct;
   }
 
   if (pid == 0)
@@ -642,9 +602,9 @@ loader_execute(
       dup2(stderr_pipe[1], fileno(stderr));
     }
 
-    set_ldpreload();
+    set_ldpreload(ldpreload);
 
-    loader_exec_program(commandline, working_dir/* , session_dir */, run_in_terminal/*, vgraph_name, project_name, app_name, set_env_vars */);
+    jpl_exec_program(commandline, working_dir, run_in_terminal, env_vars);
 
     return false;  /* We should never get here */
   }
@@ -656,40 +616,33 @@ loader_execute(
 
     if (fcntl(child_ptr->stdout, F_SETFL, O_NONBLOCK) == -1)
     {
-      /* log_error("Could not set noblocking mode on stdout " */
-      /*            "- pty: %s", strerror(errno)); */
+      jpl_child_error(child_ptr->ctx,
+                      "Could not set noblocking mode on stdout "
+                      "- pty: %s", strerror(errno));
       close(stderr_pipe[0]);
       close(child_ptr->stdout);
     }
   }
 
-  //log_info("Forked to run program %s:%s pid = %llu", vgraph_name, app_name, (unsigned long long)pid);
-
   *pid_ptr = child_ptr->pid = pid;
 
   return true;
 
-//free_project_name:
-  //free(child_ptr->project_name);
-
-//free_vgraph_name:
-  //free(child_ptr->vgraph_name);
-
-//free_struct:
-//  free(child_ptr);
+free_struct:
+  free(child_ptr);
 
 fail:
   return false;
 }
 
-unsigned int loader_get_app_count(void)
+unsigned int jpl_get_app_count(void)
 {
   struct list_head * node_ptr;
   unsigned int count;
 
   count = 0;
 
-  list_for_each(node_ptr, &g_childs_list)
+  list_for_each(node_ptr, &jpl_g_children)
   {
     count++;
   }

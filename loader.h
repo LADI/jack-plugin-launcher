@@ -8,27 +8,46 @@
  **************************************************************************
  */
 
-#ifndef __LASHD_LOADER_H__
-#define __LASHD_LOADER_H__
+#ifndef JPL_H__6D6AF97A_DA41_46D6_954B_A121B25E96CE__INCLUDED
+#define JPL_H__6D6AF97A_DA41_46D6_954B_A121B25E96CE__INCLUDED
 
-void loader_init(void (* on_child_exit)(pid_t pid, int exit_status));
+/** Handle to object describing child */
+typedef struct jpl_child_tag { int unused; } * jpl_child_handle;
+
+typedef
+void
+(* jpl_on_child_exit)(
+  void * ctx,
+  int exit_status);
+
+typedef
+void
+(* jpl_log_callback)(
+  void * ctx,
+  bool error,
+  const char * format,
+  ...) __attribute__((format(printf, 3, 4)));
+
+void
+jpl_init(
+  jpl_on_child_exit on_child_exit,
+  jpl_log_callback log_callback);
 
 bool
-loader_execute(
-  //const char * vgraph_name,
-  //const char * project_name,
-  //const char * app_name,
+jpl_execute(
+  void * ctx,
   const char * working_dir,
-  //const char * session_dir,
   bool run_in_terminal,
   const char * commandline,
-  //bool set_env_vars,
-  pid_t * pid_ptr);
+  const char * const * env_vars,
+  const char * const * ldpreload,
+  pid_t * pid_ptr,
+  jpl_child_handle * child_handle_ptr);
 
-void loader_run(void);
+void jpl_run(void);
 
-void loader_uninit(void);
+void jpl_uninit(void);
 
-unsigned int loader_get_app_count(void);
+unsigned int jpl_get_app_count(void);
 
-#endif /* __LASHD_LOADER_H__ */
+#endif /* #ifndef JPL_H__6D6AF97A_DA41_46D6_954B_A121B25E96CE__INCLUDED */
