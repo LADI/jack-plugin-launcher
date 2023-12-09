@@ -27,3 +27,12 @@ doxdoc:
 	mkdir -vp build
 	doxygen doc/Doxyfile
 	cp doc/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js build/doxout/html/
+
+.PHONY: cdbus_regenerate
+cdbus_regenerate: appman_defs.c
+
+# force regenerate (so cdbus-codegen changes apply)
+.PHONY: appman_defs.c
+
+appman_defs.c: org.ladish.applicationmanager.xml
+	cat org.ladish.applicationmanager.xml | cdbus-codegen jpl_appman > appman_defs.c

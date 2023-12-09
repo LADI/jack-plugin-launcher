@@ -88,6 +88,7 @@ def configure(conf):
     conf.check_cfg(package='libevent', mandatory=True, args='--cflags --libs')
     conf.check_cfg(package='liblo', mandatory=True, args='--cflags --libs')
     conf.check_cfg(package='dbus-1', mandatory=False, args='--cflags --libs')
+    conf.check_cfg(package='cdbus-1', mandatory=False, args='--cflags --libs')
 
     if Options.options.mandir:
         conf.env['MANDIR'] = Options.options.mandir
@@ -166,10 +167,11 @@ def build(bld):
     prog = bld(features=['c', 'cprogram'])
     prog.source = [
         'main.c',
+        'appman.c',
         ]
     prog.includes = '.' # config.h, gitverson.h include path
     prog.target = 'jpl'
-    prog.use = ['LIBEVENT', 'LIBLO', 'DBUS-1']
+    prog.use = ['LIBEVENT', 'LIBLO', 'DBUS-1', 'CDBUS-1']
     prog.defines = ["HAVE_CONFIG_H"]
 
     # install man pages
