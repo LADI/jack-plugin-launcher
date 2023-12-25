@@ -581,6 +581,7 @@ jpl_execute(
     goto fail;
   }
 
+  child_ptr->ctx = ctx;
   child_ptr->dead = false;
   child_ptr->terminal = run_in_terminal;
   child_ptr->stdout_buffer_ptr = child_ptr->stdout_buffer;
