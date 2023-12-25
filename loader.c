@@ -61,6 +61,15 @@ struct jpl_child
 
 static jpl_on_child_exit jpl_g_on_child_exit;
 static jpl_log_callback jpl_g_on_log;
+
+static void
+(* jpl_g_on_log)(
+  void * ctx,
+  bool error,
+  const char * format,
+  ...)
+  __attribute__((format(printf, 3, 4)));
+
 static struct list_head jpl_g_children;
 
 #define jpl_log(format, args...) jpl_g_on_log(NULL, false, format, ## args);

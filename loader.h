@@ -34,14 +34,16 @@ void
  *
  * @param ctx context pointer with value as supplied by call to jpl_execute()
  * @param error whether line from stderr (true) is being logged or from stdout (false)
- * @param line char string of line being logged
+ * @param format format string
+ * @param ... optional args, as specified by @c format parameter
  */
 typedef
 void
 (* jpl_log_callback)(
   void * ctx,
   bool error,
-  const char * line);
+  const char * format,
+  ...);
 
 /**
  * @brief initialize the launcher module
