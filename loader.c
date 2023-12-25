@@ -675,6 +675,7 @@ jpl_execute(
   }
 
   *pid_ptr = child_ptr->pid = pid;
+  *child_handle_ptr = (void *)child_ptr;
 
   return true;
 
