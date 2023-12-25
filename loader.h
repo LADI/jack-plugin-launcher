@@ -55,7 +55,7 @@ jpl_init(
   jpl_log_callback log_callback);
 
 /**
- * @brief schedule child program for execution
+ * @brief run child program in a subprocess
  *
  * @param ctx context pointer that will be passed as parameter when functions,
  *        previously specified int the jpl_init() call, are called.
