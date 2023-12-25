@@ -519,7 +519,7 @@ static void set_ldpreload(const char * const * ldpreload)
   if (ldpreload == NULL) return;
 
   add = catdup_array(ldpreload, " ");
-  if (new == NULL)
+  if (add == NULL)
   {
     fprintf(stderr, "Memory allocation failure. Cannot catdup LD_PRELOAD array.\n");
     exit(1);
