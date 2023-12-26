@@ -1,7 +1,7 @@
 Abstract
 ========
 
-JACK Plugin Launcher <https://jack-plugin.ladish.org> is project for
+[JACK Plugin Launcher](https://jack-plugin.ladish.org) is project for
 providing improved environment that is well suited for applications in
 a JACK Audio Connection Kit modular system.
 
