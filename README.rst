@@ -51,3 +51,9 @@ Goals:
 For installation instructions, read the doc/INSTALL.rst file.
 If you are a (linux or libre) distribution packager,
 read the doc/PACKAGING.rst file.
+
+Source code
+-----------
+
+ * https://gitea.ladish.org/LADI/jpl (Git)
+ * https://github.com/LADI/jack-plugin-launcher (GitHub, old, possibly not up-to-date, backup repo)
