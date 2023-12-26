@@ -58,5 +58,9 @@ read the doc/PACKAGING.rst file.
 Source code
 -----------
 
+```
+NOTE: This project is Work In Progress
+```
+
  * https://gitea.ladish.org/LADI/jpl (Git)
  * https://github.com/LADI/jack-plugin-launcher (GitHub, old, possibly not up-to-date, backup repo)
