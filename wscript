@@ -124,6 +124,7 @@ def configure(conf):
         flags.add_c(['-Wall', '-Wextra'])
         #flags.add_c('-Wpedantic')
         #flags.add_c('-Werror')
+        flags.add_c('-Wno-unused-parameter') # FIXME
 
         # https://wiki.gentoo.org/wiki/Modern_C_porting
         if conf.env['CC'] == 'clang':
