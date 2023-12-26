@@ -193,6 +193,7 @@ def build(bld):
         ext_out=['.h'])
 
     lib = bld.shlib(source = [], features = 'c cshlib', includes = [bld.path.get_bld()])
+    lib.vnum = "0.0.1"
     lib.uselib = 'DL'
     lib.target = 'jpl'
     for source in [
