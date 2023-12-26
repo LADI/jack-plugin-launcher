@@ -70,6 +70,7 @@ def options(opt):
     opt.load('compiler_c')
     opt.load('wafautooptions')
 
+    opt.add_option('--debug', action='store_true', default=False, dest='debug', help="Build debuggable binaries")
     opt.add_auto_option(
         'devmode',
         help='Enable devmode', # enable warnings and treat them as errors
@@ -82,6 +83,8 @@ def options(opt):
 def configure(conf):
     conf.load('compiler_c')
     conf.load('wafautooptions')
+
+    conf.env['BUILD_DEBUG'] = Options.options.debug
 
     flags = WafToolchainFlags(conf)
 
@@ -122,6 +125,11 @@ def configure(conf):
             flags.add_c('-Werror=implicit-int')
             flags.add_c('-Werror=incompatible-pointer-types')
             flags.add_c('-Werror=strict-prototypes')
+
+    if conf.env['BUILD_DEBUG']:
+        flags.add_c('-g')
+        flags.add_c('-O0')
+        flags.add_link('-g')
 
     flags.flush()
 
