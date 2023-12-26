@@ -26,7 +26,7 @@ cibuild:
 .PHONY: doxdoc
 doxdoc:
 	mkdir -vp build
-	echo "@mainpage" > build/README.md
+	echo "@mainpage Main page" > build/README.md
 	cat README.rst >> build/README.md
 	doxygen doc/Doxyfile
 	cp doc/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js build/doxout/html/

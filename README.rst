@@ -1,13 +1,16 @@
-JACK Plugin Launcher
-====================
+Abstract
+========
 
-A project for providing improved environment that is well suited
-for applications in a JACK Audio Connection Kit modular system.
+JACK Plugin Launcher is project for providing improved environment
+that is well suited for applications in a JACK Audio Connection Kit
+modular system.
 
 Jack Plugin is a term for libjack.so linked program that executes
 in one or more dedicated processes.
 
-Goals:
+Goals
+=====
+
  * For improved DSP performance and recovery from crashes
    that occured in the UI parts of the Jack Plugins,
    JACK Plugins are facilitated to run with
