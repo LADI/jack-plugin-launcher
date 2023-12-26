@@ -23,6 +23,7 @@ EPREFIX := $(TOP)/build/destdir
 cibuild:
 	./waf configure --prefix=$(EPREFIX) && ./waf install && $(EPREFIX)/bin/jpl
 
+.PHONY: doxdoc
 doxdoc:
 	mkdir -vp build
 	echo "@mainpage" > build/README.md
