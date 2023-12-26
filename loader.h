@@ -95,14 +95,14 @@ jpl_run(
   void);
 
 /**
- * uninitialize the launcher module
+ * @brief uninitialize the launcher module
  */
 void
 jpl_uninit(
   void);
 
 /**
- * get number of child processes
+ * @brief get number of child processes
  */
 unsigned int
 jpl_get_app_count(
