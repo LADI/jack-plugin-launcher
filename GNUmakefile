@@ -31,6 +31,11 @@ doxdoc:
 	doxygen doc/Doxyfile
 	cp doc/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js build/doxout/html/
 
+.PHONY: doxdoc_copy
+doxdoc_copy: doxdoc
+	rm -rf ../jack-plugin-docs/libjpl-api/
+	cp -Rv build/doxout/html ../jack-plugin-docs/libjpl-api
+
 .PHONY: cdbus_regenerate
 cdbus_regenerate: appman_defs.c
 
