@@ -1,3 +1,6 @@
+/* This data is GENERATED from D-Bus interface description XML
+ * Edit by hand only if you know what you are doing */
+
 CDBUS_SIGNAL_ARGS_BEGIN(applicationWasActivated, "")
   CDBUS_SIGNAL_ARG_DESCRIBE("id", "s", "")
   CDBUS_SIGNAL_ARG_DESCRIBE("aliasId", "s", "")
