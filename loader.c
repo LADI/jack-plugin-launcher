@@ -118,7 +118,7 @@ jpl_check_line_repeat_end(
 
 static
 void
-jpl_childs_bury(
+jpl_zombies_bury(
   void)
 {
   struct list_head *node_ptr;
@@ -224,7 +224,7 @@ void
 jpl_uninit(
   void)
 {
-  jpl_childs_bury();
+  jpl_zombies_bury();
 }
 
 #if 0
@@ -455,7 +455,7 @@ jpl_read_child_output(
 
 static
 void
-jpl_read_childs_output(
+jpl_read_zombies_output(
   void)
 {
   struct list_head * node_ptr;
@@ -493,8 +493,8 @@ void
 jpl_run(
   void)
 {
-  jpl_read_childs_output();
-  jpl_childs_bury();
+  jpl_read_zombies_output();
+  jpl_zombies_bury();
 }
 
 static void set_ldpreload(const char * const * ldpreload)
