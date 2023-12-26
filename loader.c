@@ -207,12 +207,7 @@ jpl_sigchld_handler(
   }
 }
 
-void
-jpl_init(
-  jpl_on_child_exit on_child_exit,
-  jpl_log_callback log_callback)
-  __attribute__((visibility("default")));
-
+__attribute__((visibility("default")))
 void
 jpl_init(
   jpl_on_child_exit on_child_exit,
@@ -224,11 +219,7 @@ jpl_init(
   INIT_LIST_HEAD(&jpl_g_children);
 }
 
-void
-jpl_uninit(
-  void)
-  __attribute__((visibility("default")));
-
+__attribute__((visibility("default")))
 void
 jpl_uninit(
   void)
@@ -497,11 +488,7 @@ jpl_read_childs_output(
   }
 }
 
-void
-jpl_run(
-  void)
-  __attribute__((visibility("default")));
-
+__attribute__((visibility("default")))
 void
 jpl_run(
   void)
@@ -547,18 +534,7 @@ static void set_ldpreload(const char * const * ldpreload)
   free(add);
 }
 
-bool
-jpl_execute(
-  void * ctx,
-  const char * working_dir,
-  bool run_in_terminal,
-  const char * commandline,
-  const char * const * env_vars,
-  const char * const * ldpreload,
-  pid_t * pid_ptr,
-  jpl_child_handle * child_handle_ptr)
-  __attribute__((visibility("default")));
-
+__attribute__((visibility("default")))
 bool
 jpl_execute(
   void * ctx,
@@ -686,11 +662,7 @@ fail:
   return false;
 }
 
-unsigned int
-jpl_get_app_count(
-  void)
-  __attribute__((visibility("default")));
-
+__attribute__((visibility("default")))
 unsigned int
 jpl_get_app_count(
   void)
