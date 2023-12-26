@@ -18,6 +18,7 @@ from waftoolchainflags import WafToolchainFlags
 
 APPNAME='jpl'
 VERSION='0-dev'
+DBUS_NAME_BASE = 'org.ladish.jpl'
 
 # these variables are mandatory ('/' are converted automatically)
 srcdir = '.'
@@ -90,7 +91,16 @@ def configure(conf):
 
     conf.check_cfg(package='libevent', mandatory=True, args='--cflags --libs')
     conf.check_cfg(package='liblo', mandatory=True, args='--cflags --libs')
+
     conf.check_cfg(package='dbus-1', mandatory=False, args='--cflags --libs')
+
+    dbus_dir = conf.check_cfg(package='dbus-1', args='--variable=session_bus_services_dir', msg="Retrieving D-Bus services dir")
+    if not dbus_dir:
+        dbus_dir = os.path.join(os.path.normpath(conf.env['PREFIX']), 'share', 'dbus-1', 'services')
+
+    dbus_dir = dbus_dir.strip()
+    conf.env['DBUS_SERVICES_DIR'] = dbus_dir
+
     conf.check_cfg(package='cdbus-1', mandatory=False, args='--cflags --libs')
 
     if Options.options.mandir:
@@ -98,8 +108,13 @@ def configure(conf):
     else:
         conf.env['MANDIR'] = conf.env['PREFIX'] + '/share/man'
 
+    conf.env['LIBEXEC_DIR'] = conf.env['PREFIX'] + '/libexec/'
+
     conf.define('JPL_VERSION', VERSION)
     conf.define('HAVE_GITVERSION_H', 1)
+    conf.define('DBUS_NAME_BASE', DBUS_NAME_BASE)
+    conf.define('DBUS_BASE_PATH', '/' + DBUS_NAME_BASE.replace('.', '/'))
+    conf.define('BASE_NAME', APPNAME)
     conf.define('BUILD_TIMESTAMP', time.ctime())
     conf.write_config_header('config.h')
 
@@ -151,10 +166,24 @@ def configure(conf):
     print()
 
     display_msg(conf, "Install prefix", conf.env['PREFIX'], 'CYAN')
+    display_msg(conf, "bin dir", conf.env['BINDIR'], 'CYAN')
+    display_msg(conf, "libexec dir", conf.env['LIBEXEC_DIR'], 'CYAN')
+    display_msg(conf, "man dir", conf.env['MANDIR'], 'CYAN')
+    display_msg(conf, "D-Bus services dir", conf.env['DBUS_SERVICES_DIR'], 'CYAN')
     display_msg(conf, "Compiler", conf.env['CC'][0], 'CYAN')
     conf.summarize_auto_options()
     flags.print()
     print()
+
+def create_service_taskgen(bld, target, opath, binary):
+    bld(
+        features     = 'subst', # the feature 'subst' overrides the source/target processing
+        source       = ['dbus.service.in'], # list of string or nodes
+        target       = target,  # list of strings or nodes
+        install_path = bld.env['DBUS_SERVICES_DIR'] + os.path.sep,
+        # variables to use in the substitution
+        dbus_object_path = opath,
+        daemon_bin_path  = binary)
 
 def build(bld):
     bld(rule=git_ver,
@@ -175,12 +204,25 @@ def build(bld):
     prog = bld(features=['c', 'cprogram'])
     prog.source = [
         'main.c',
-        'appman.c',
         ]
     prog.includes = '.' # config.h, gitverson.h include path
     prog.target = 'jpl'
     prog.use = ['LIBEVENT', 'LIBLO', 'DBUS-1', 'CDBUS-1']
     prog.defines = ["HAVE_CONFIG_H"]
+
+    daemon = bld(features=['c', 'cprogram'])
+    daemon.source = [
+        'jpld.c',
+        'appman.c',
+        ]
+    daemon.includes = '.' # config.h, gitverson.h include path
+    daemon.target = 'jpld'
+    daemon.use = ['LIBEVENT', 'LIBLO', 'DBUS-1', 'CDBUS-1']
+    daemon.defines = ["HAVE_CONFIG_H"]
+    daemon.install_path = bld.env['LIBEXEC_DIR']
+
+    # process dbus.service.in -> jpld.service
+    create_service_taskgen(bld, DBUS_NAME_BASE + '.service', DBUS_NAME_BASE, os.path.join(daemon.install_path, daemon.target))
 
     # install man pages
     man_pages = [
