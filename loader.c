@@ -163,6 +163,9 @@ jpl_sigchld_handler(
   pid_t pid;
   struct jpl_child *child_ptr;
   int signal;
+  int errno_saved;
+
+  errno_saved = errno;
 
   ASSERT(signum == SIGCHLD);
 
@@ -205,6 +208,8 @@ jpl_sigchld_handler(
       jpl_log("Child was stopped by signal %d", WSTOPSIG(status));
     }
   }
+
+  errno = errno_saved;
 }
 
 __attribute__((visibility("default")))
